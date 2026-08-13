@@ -5,140 +5,138 @@
 ![Compose Multiplatform](https://img.shields.io/badge/Compose%20Multiplatform-1.11.1-blue)
 ![License](https://img.shields.io/badge/License-AGPL--3.0-blue)
 
-DevChats — бесплатный, открытый (open-source) десктоп-мессенджер (аналог Discord),
-который **не зависит от серверов сервиса**: каждый пользователь сам поднимает свой
-узел (node), и соединение идёт напрямую по `IP:port`. Пока твой узел запущен — ты
-в сети, и к тебе можно подключиться.
+DevChats is a free, open-source desktop messenger (a Discord-like app) that **does not depend on any service's servers**: every user runs their own node, and connections go directly over `IP:port`. As long as your node is running, you are online and reachable.
 
 ---
 
-## Возможности
+## Features
 
-### Аккаунты
-- Регистрация и вход: имя, пароль, **аватарка** (загрузка из файла)
-- Всё хранится локально в SQLite — ни одного внешнего сервиса
+### Accounts
+- Sign up and sign in: display name, password, **avatar** (loaded from a file)
+- Everything is stored locally in SQLite — no external services involved
 
-### Серверы (узлы)
-- Создание сервера: название, описание, аватарка
-- Настройки сервера (вкладки «Основное» и «Люди»):
-  - профиль: название, описание, аватар, **цвет баннера** (16 базовых цветов + свой HEX)
-  - сообщения о входе/выходе пользователей (вкл/выкл + выбор каналов)
-  - канал бездействия (вкл/выкл + выбор канала)
-  - удаление сервера (с подтверждением)
-- Подключение к чужим узлам по `IP:port`
+### Servers (nodes)
+- Create a server: name, description, avatar
+- Server settings (tabs **General** and **People**):
+  - profile: name, description, avatar, **banner color** (16 base colors + custom HEX)
+  - join/leave messages (on/off + channel selection)
+  - AFK channel (on/off + channel selection)
+  - delete server (with confirmation)
+- Connect to other nodes by `IP:port`
 
-### Каналы
-- Пять типов: **текст, голос, объявления, конференция, форум**
-- Создание по ПКМ на пустом месте: тип + название + описание
-- ПКМ по каналу: переименовать, изменить тип, настроить, удалить (с подтверждением)
-- Контекстные меню под курсором (позиционируются по реальным координатам клика)
+### Channels
+- Five types: **text, voice, announcements, conference, forum**
+- Create via right-click on empty space: type + name + description
+- Right-click a channel: rename, change type, settings, delete (with confirmation)
+- Context menus appear under the cursor (positioned at the real click coordinates)
 
-### Сообщения
-- Текстовый чат, **Enter — отправить, Shift+Enter — новая строка**
-- История сообщений
-- Отправка файлов (📎, диалог выбора файла, drag & drop)
-- Реакции: эмодзи-сервера с автодополнением и превращением `:имя:` в эмодзи
+### Messages
+- Text chat, **Enter — send, Shift+Enter — new line**
+- Message history
+- File sending (📎, file picker dialog, drag & drop)
+- Reactions: server emojis with autocomplete and `:name:` → emoji conversion
 
-### Голос и видео
-- Голосовые звонки 1-на-1 (Opus-кодек, захват микрофона)
-- Видеозвонки и **демонстрация экрана** (JPEG-кадры по WebSocket)
-- Звуковая панель (soundboard): свои звуки с обрезкой длины и привязкой клавиши
+### Voice and video
+- 1-on-1 voice calls (Opus codec, microphone capture)
+- Video calls and **screen sharing** (JPEG frames over WebSocket)
+- Soundboard: your own sounds with length trimming and hotkey binding
 
-### Роли
-- Создание, редактирование, удаление
-- Цвет роли (16 базовых + HEX), порядок (выше = приоритетнее), поиск
-- Настройки: показывать участников отдельно, разрешить @упоминание всем
+### Roles
+- Create, edit, delete
+- Role color (16 base colors + HEX), ordering (higher = more priority), search
+- Settings: display members separately, allow everyone to @mention the role
 
 ---
 
-## Технологии
+## Tech stack
 
-| Слой | Технология |
+| Layer | Technology |
 |---|---|
-| Язык / UI | Kotlin, Compose Multiplatform (desktop) |
-| Сеть | Ktor 3.5 (сервер + клиент), WebSocket, JSON (kotlinx.serialization) |
-| Хранилище | SQLite через Exposed, миграции схемы |
-| Аудио | Opus (Concentus), захват микрофона |
-| Видео | Webcam Capture, JPEG-сжатие кадров |
-| Сборка | Gradle (wrapper 9.4), JDK 25 |
+| Language / UI | Kotlin, Compose Multiplatform (desktop) |
+| Networking | Ktor 3.5 (server + client), WebSocket, JSON (kotlinx.serialization) |
+| Storage | SQLite via Exposed, schema migrations |
+| Audio | Opus (Concentus), microphone capture |
+| Video | Webcam Capture, JPEG frame compression |
+| Build | Gradle (wrapper 9.4), JDK 25 |
 
 ---
 
-## Структура проекта
+## Project structure
 
 ```
 DevChats/
-├── protocol/        — общие DTO, схемы сообщений, версия протокола
-├── server-core/     — логика узла: Ktor-сервер (WebSocket + HTTP), SQLite,
-│                      каналы, почтовый ящик, файлы (общая библиотека)
-├── client-core/     — менеджер подключений: Ktor-клиент, состояние соединений
-├── desktop/         — Compose UI (зависит от client-core + server-core)
+├── protocol/        — shared DTOs, message schemas, protocol version
+├── server-core/     — node logic: Ktor server (WebSocket + HTTP), SQLite,
+│                      channels, mailbox, files (shared library)
+├── client-core/     — connection manager: Ktor client, connection state
+├── desktop/         — Compose UI (depends on client-core + server-core)
 ```
 
-Ключевое решение: **вся серверная логика — в общей библиотеке `server-core`**.
-Десктоп-приложение встраивает её в себя; будущий постоянный сервер на Linux
-будет отдельной точкой входа поверх той же библиотеки. Один код — один протокол.
+Key decision: **all server logic lives in the shared `server-core` library**.
+The desktop app embeds it; the future permanent Linux server will be a separate
+entry point on top of the same library. One codebase — one protocol.
 
 ---
 
-## Запуск
+## Running
 
-Требуется **JDK 25+** (проект собирается Gradle wrapper 9.4).
+Requires **JDK 25+** (project builds with Gradle wrapper 9.4).
 
 ```bash
-# собрать и запустить десктоп-приложение
+# build and run the desktop app
 ./gradlew :desktop:run
 
-# прогнать все тесты
+# run all tests
 ./gradlew build
 ```
 
-Запуск из IDE (IntelliJ IDEA): импортируй проект как Gradle-проект и запусти
-main-класс `devchats.desktop.MainKt`. При старте в консоль печатается путь к данным
-и маркер сборки — по ним сразу видно, какая версия запущена.
+From the IDE (IntelliJ IDEA): import the project as a Gradle project and run the
+main class `devchats.desktop.MainKt`. On startup the console prints the data
+directory and a build marker, so you can immediately see which build is running.
 
-### Где хранятся данные
+### Where data is stored
 
-Всё (аккаунты, серверы, каналы, сообщения, настройки) — в SQLite-файле в папке данных:
+Everything (accounts, servers, channels, messages, settings) lives in a SQLite
+file in the data directory:
 
-| Способ | Путь |
+| Method | Path |
 |---|---|
-| По умолчанию | `~/.devchats` |
-| Переменная окружения `DEVCHATS_HOME` | куда укажешь (например, для второго экземпляра) |
-| Системное свойство `devchats.home` | `-Ddevchats.home=...` (удобно в конфигурации запуска IDE) |
+| Default | `~/.devchats` |
+| Environment variable `DEVCHATS_HOME` | wherever you point it (e.g. a second instance) |
+| System property `devchats.home` | `-Ddevchats.home=...` (handy in IDE run configurations) |
 
 ---
 
-## Как это работает
+## How it works
 
-- Пользователь А знает адрес пользователя Б: `IP:port`.
-- А подключается к узлу Б (WebSocket). Б **должен быть в сети** — его локальный
-  узел запущен (либо у Б есть постоянный сервер).
-- Если Б офлайн: сообщение не доставляется сразу. Узел А кладёт его в **исходящую
-  очередь**; при следующем подключении происходит **синхронизация почтового ящика**
-  и сообщения доставляются.
-- Узел может вести каналы (текст/голос) — тогда участники подключаются к нему,
-  как к «серверу» в Discord. Когда владелец узла офлайн, его каналы недоступны.
+- User A knows user B's address: `IP:port`.
+- A connects to B's node (WebSocket). B **must be online** — their local node is
+  running (or B has a permanent server).
+- If B is offline, the message is not delivered immediately. Node A puts it into
+  an **outbox**; on the next connection a **mailbox sync** happens and messages
+  are delivered.
+- A node can host channels (text/voice) — members connect to it like to a Discord
+  "server". When the node owner is offline, their channels are unavailable.
 
-Протокол версионируется: каждое сообщение — JSON-конверт
+The protocol is versioned: every message is a JSON envelope
 `{ "v": 1, "type": "dm.send", "id": "uuid", "payload": { ... } }`,
-версия проверяется при рукопожатии `hello`.
+and the version is verified during the `hello` handshake.
 
 ---
 
-## Дорожная карта
+## Roadmap
 
-- ✅ **M0–M6** — каркас, узел, подключение/присутствие, текстовые сообщения,
-  передача файлов, голос, видео и демонстрация экрана
-- ✅ **M7+** — аккаунты, серверы, каналы с типами, роли, эмодзи, звуковая панель,
-  полноценные настройки сервера
-- ⏳ В планах — постоянный сервер на Linux, боты и API узла, хардненинг (TLS),
-  обход NAT (STUN/TURN)
+- ✅ **M0–M6** — scaffold, node, connect/presence, text messages, file transfer,
+  voice, video and screen sharing
+- ✅ **M7+** — accounts, servers, typed channels, roles, emojis, soundboard,
+  full server settings
+- ⏳ Planned — permanent Linux server, bots and node API, hardening (TLS),
+  NAT traversal (STUN/TURN)
 
-Полный план — в [PLAN.md](PLAN.md).
+Full plan — see [PLAN.md](PLAN.md).
 
 ---
 
-## Лицензия
+## License
 
-Проект распространяется под **GNU Affero General Public License v3.0** — см. [LICENSE](LICENSE).
+Distributed under the **GNU Affero General Public License v3.0** — see [LICENSE](LICENSE).
